@@ -38,7 +38,27 @@ void loop(){
     SerialBT.write(Serial.read());
   }  
   if (SerialBT.available()) {
-    tiempoPres = millis()- tiempoPres;
+    char inComingChar = SerialBT.read();
+    if(inCommingChar = 'c'){
+      act4();    
+    }else if(inCommingChar = 's'){
+      act2();
+    }
+  }
+}
+
+void act2(){
+  char inComingChar = SerialBT.read();
+  String mensaje = "";
+    
+  while(inComingChar != '\n'){
+      mensaje += String(inComingChar);
+  }
+  Serial.println(mensaje);
+}
+
+void act4(){
+  tiempoPres = millis()- tiempoPres;
     char inComingChar = SerialBT.read();
     if(inComingChar != '\n'){
       message += String(inComingChar);
@@ -76,6 +96,4 @@ void loop(){
     coordenada += message;
     contador++;
     message="";
-  }
-      delay(20);
 }
