@@ -18,7 +18,9 @@ BluetoothSerial SerialBT;
 String message = "";
 char inComigChar;
 int contador = 0;
+int bnd = 0;
 String coordenada;
+String coordenada_in;
 unsigned long tiempoPres = 0;
 //int estado = SerialBT.read();         // inicia detenido
 
@@ -33,56 +35,39 @@ void setup()  {
 } 
 
 void loop(){
-   
  if (Serial.available()) {
     SerialBT.write(Serial.read());
   }  
   if (SerialBT.available()) {
-    char inComingChar = SerialBT.read();
-    if(inCommingChar = 'c'){
-      act4();    
-    }else if(inCommingChar = 's'){
-      act2();
-    }
-  }
-}
-
-void act2(){
-  char inComingChar = SerialBT.read();
-  String mensaje = "";
-    
-  while(inComingChar != '\n'){
-      mensaje += String(inComingChar);
-  }
-  Serial.println(mensaje);
-}
-
-void act4(){
-  tiempoPres = millis()- tiempoPres;
+    tiempoPres = millis()- tiempoPres;
     char inComingChar = SerialBT.read();
     if(inComingChar != '\n'){
       message += String(inComingChar);
+    }else{
+      Serial.println("finaliza la coordenada");
+      Serial.println(coordenada_in);
+      bnd = 0;
     }
     if(contador > 0){
         coordenada += String(tiempoPres/1000);
         tiempoPres = millis();
     }
-    if(message=="a"){     
+    if(message=="a" && bnd == 0){     
         Serial.println("Adelante");
     }
-    if(message=="b"){  
+    if(message=="b" && bnd == 0){  
       Serial.println("Izquierda"); 
     }
-    if(message=="c"){
+    if(message=="c" && bnd == 0){
       Serial.println("Derecha");
     }
-    if(message=="d"){ 
+    if(message=="d" && bnd == 0){ 
       Serial.println("Atras");
     }
-    if(message=="e"){ 
+    if(message=="e" && bnd == 0){ 
       Serial.println("Stop");
     }
-    if(message=="f"){  
+    if(message=="f" && bnd == 0){  
       Serial.println("Off");
       Serial.println(coordenada);
       
@@ -92,8 +77,19 @@ void act4(){
       //uint8_t* data[50];
       SerialBT.write(myBuffer,sizeof(myBuffer));
       coordenada = "";
+    }    
+    if(message=="g"){ 
+      Serial.println("cuarta activity");
+    }
+    if(message=="h"){ 
+      Serial.println("quinta activity");
+      bnd++;
     }
     coordenada += message;
+    coordenada_in += message;
+    Serial.println(coordenada_in);
     contador++;
     message="";
+  }
+  delay(20);
 }
