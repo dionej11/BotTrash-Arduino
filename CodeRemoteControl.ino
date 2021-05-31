@@ -41,11 +41,18 @@ void loop(){
   if (SerialBT.available()) {
     tiempoPres = millis()- tiempoPres;
     char inComingChar = SerialBT.read();
-    if(inComingChar != '\n'){
-      message += String(inComingChar);
+    if(inComingChar != '.'){
+      if(inComingChar == 'h'){
+        Serial.println("quinta activity");
+        bnd++;
+        coordenada_in = "";
+        coordenada = "";
+      }else{
+        message += String(inComingChar);
+      }
     }else{
-      Serial.println("finaliza la coordenada");
-      Serial.println(coordenada_in);
+      Serial.println("finaliza la coordenada: ");
+      Serial.print(coordenada_in);
       bnd = 0;
     }
     if(contador > 0){
@@ -78,16 +85,12 @@ void loop(){
       SerialBT.write(myBuffer,sizeof(myBuffer));
       coordenada = "";
     }    
-    if(message=="g"){ 
+    /*if(message=="g"){ 
       Serial.println("cuarta activity");
-    }
-    if(message=="h"){ 
-      Serial.println("quinta activity");
-      bnd++;
-    }
+    }*/
     coordenada += message;
     coordenada_in += message;
-    Serial.println(coordenada_in);
+    //Serial.println(coordenada_in);
     contador++;
     message="";
   }
