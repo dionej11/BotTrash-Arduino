@@ -11,6 +11,9 @@
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 
+#define ECHO 35
+#define TRIGGER 32
+
 BluetoothSerial SerialBT;
 #include <analogWrite.h>
 
@@ -22,15 +25,14 @@ int enB = 26; // PWM Motor B
 int in3 = 14; // Control Rotacion Motor B
 int in4 = 27;  // Control Rotacion Motor 
 
-int motor_speed = 180; //velocidad alta motores
-int motor_speed2 = 160;//velocidad baja motores
+int motor_speed = 175; //velocidad alta motores
 
 String message = "";
 char inComigChar;
 int contador = 0;
-int bnd = 0;
+//int bnd = 0;
 String coordenada;
-String coordenada_in;
+//String coordenada_in;
 unsigned long tiempoPres = 0;
 
 void setup()  { 
@@ -39,6 +41,11 @@ void setup()  {
   Serial.println("The device started, now you can pair it with bluetooth!");
   unsigned long tiempoTrans = millis();
 
+  pinMode(ECHO, INPUT);
+  pinMode(TRIGGER, OUTPUT);
+  
+  digitalWrite(TRIGGER, LOW);//Inicializamos el pin con 0
+  
   pinMode(enA, OUTPUT);
   pinMode(in1, OUTPUT);
   pinMode(in2, OUTPUT);
@@ -59,46 +66,36 @@ void loop(){
     tiempoPres = millis()- tiempoPres;
     char inComingChar = SerialBT.read();
     if(inComingChar != '.'){
-      if(inComingChar == 'h'){
-        Serial.println("quinta activity");
-        bnd++;
-        coordenada_in = "";
-        coordenada = "";
-      }else{
         message += String(inComingChar);
-      }
     }
     else{
-      Serial.println("finaliza la coordenada: ");
-      Serial.print(coordenada_in);
-      bnd = 0;
-      limpiar(coordenada_in);
+      limpiarLugar();
     }
     if(contador > 0){
         coordenada += String(tiempoPres/1000);
         tiempoPres = millis();
     }
-    if(message=="a" && bnd == 0){     
+    if(message=="a"){     
         Serial.println("Adelante");
         adelante();
     }
-    if(message=="b" && bnd == 0){  
+    if(message=="b"){  
       Serial.println("Izquierda"); 
       izquierda();
     }
-    if(message=="c" && bnd == 0){
+    if(message=="c"){
       Serial.println("Derecha");
       derecha();
     }
-    if(message=="d" && bnd == 0){ 
+    if(message=="d"){ 
       Serial.println("Atras");
       atras();
     }
-    if(message=="e" && bnd == 0){ 
+    if(message=="e"){ 
       Serial.println("Stop");
       parar();
     }
-    if(message=="f" && bnd == 0){  
+    if(message=="f"){  
       Serial.println("Off");
       Serial.println(coordenada);
       
@@ -109,13 +106,11 @@ void loop(){
       coordenada = "";
     } 
     coordenada += message;
-    coordenada_in += message;
     contador++;
     message="";
   }
   delay(20);
 }
-
 void adelante(){
   digitalWrite(in1, LOW); 
   digitalWrite(in2, HIGH);  
@@ -137,115 +132,48 @@ void parar(){
   digitalWrite(in3, LOW); 
   digitalWrite(in4, LOW);
 }
-
-void derecha(){
-  analogWrite(enA, motor_speed2); 
-  analogWrite(enB, motor_speed2);
-  
+void derecha(){  
   digitalWrite(in1, LOW); 
   digitalWrite(in2, LOW); 
 
   digitalWrite(in3, LOW); 
   digitalWrite(in4, HIGH);
 }
-
-void izquierda(){
-  analogWrite(enA, motor_speed2); 
-  analogWrite(enB, motor_speed2);
-  
+void izquierda(){  
   digitalWrite(in1, LOW); //DERECHA
   digitalWrite(in2, HIGH); 
 
   digitalWrite(in3, LOW); //IZQUIERDA
   digitalWrite(in4, LOW);
 }
-void limpiar(String lugar){//a1e1
-  int i = 0;
-  while(i < lugar.length()){
-    char letra = lugar.charAt(i);
-    switch (letra) {
-      case 'a':
-        {
-          Serial.println("entra al case a");
-          String cadena_tiempo = "";
-          i++;
-          while(isDigit(lugar.charAt(i))) {
-            cadena_tiempo += lugar.charAt(i);
-            i++;
-          }
-          int tiempo = cadena_tiempo.toInt();
-          adelante();
-          Serial.println(tiempo);
-          delay(tiempo*1000);
-        }
-        break; 
-
-      case 'b':
-        {
-          Serial.println("entra al case b");
-          String cadena_tiempo = "";
-          i++;
-          while(isDigit(lugar.charAt(i))) {
-            cadena_tiempo += lugar.charAt(i);
-            i++;
-          }
-          int tiempo = cadena_tiempo.toInt();
-          izquierda();
-          Serial.println(tiempo);
-          delay(tiempo*1000);
-        }
-        break; 
-
-      case 'c':
-        {
-          Serial.println("entra al case c");
-          String cadena_tiempo = "";
-          i++;
-          while(isDigit(lugar.charAt(i))) {
-            cadena_tiempo += lugar.charAt(i);
-            i++;
-          }
-          int tiempo = cadena_tiempo.toInt();
-          derecha();
-          Serial.println(tiempo);
-          delay(tiempo*1000);
-        }
-        break; 
-
-      case 'd':
-        {
-          Serial.println("entra al case d");
-          String cadena_tiempo = "";
-          i++;
-          while(isDigit(lugar.charAt(i))) {
-            cadena_tiempo += lugar.charAt(i);
-            i++;
-          }
-          int tiempo = cadena_tiempo.toInt();
-          atras();
-          Serial.println(tiempo);
-          delay(tiempo*1000);
-        }
-        break; 
-
-      case 'e':
-        {
-          Serial.println("entra al case e");
-          String cadena_tiempo = "";
-          i++;
-          while(isDigit(lugar.charAt(i))) {
-            cadena_tiempo += lugar.charAt(i);
-            i++;
-          }
-          int tiempo = cadena_tiempo.toInt();
-          parar();
-          Serial.println(tiempo);
-          delay(tiempo*1000);
-        }
-        break; 
-    }
+void limpiarLugar(){
+  int tiempoLimpieza = 0;
+  while(tiempoLimpieza < 20){
+      long t; //timepo que demora en llegar el eco
+      long d; //distancia en centimetros
+    
+      digitalWrite(TRIGGER, HIGH);
+      delayMicroseconds(10);          //Enviamos un pulso de 10us
+      digitalWrite(TRIGGER, LOW);
+      
+      t = pulseIn(ECHO, HIGH); //obtenemos el ancho del pulso
+      d = t/59;             //escalamos el tiempo a una distancia en cm
+      
+      Serial.print("Distancia: ");
+      Serial.print(d);      //Enviamos serialmente el valor de la distancia
+      Serial.print("cm");
+      Serial.println();
+      delay(100);          //Hacemos una pausa de 100ms
+      adelante();
+      if(d >= 15 && d < 50){
+        Serial.println("obstaculo");
+        parar();
+        delay(2000);
+        atras();
+        delay(1000);
+        derecha();
+        delay(600);
+        tiempoLimpieza++;
+      }
   }
-  Serial.println("sale del while y para");
-  parar();
-  delay(3000);
 }
